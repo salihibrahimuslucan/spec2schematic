@@ -245,7 +245,7 @@ def build_drawing(spec: Spec) -> Drawing:
     for segment in segments:
         width = max(width, segment.x1, segment.x2)
     for label in labels:
-        width = max(width, _label_bbox(label)[2])
+        width = max(width, label_bbox(label)[2])
     width += MARGIN
 
     height = MARGIN + BOX_HEIGHT
@@ -258,7 +258,7 @@ def build_drawing(spec: Spec) -> Drawing:
     return Drawing(spec.name, width, height, boxes, pins, segments, dots, labels)
 
 
-def _label_bbox(label: Label) -> tuple[int, int, int, int]:
+def label_bbox(label: Label) -> tuple[int, int, int, int]:
     """Approximate (x1, y1, x2, y2) box of a rendered label."""
     w = text_width(label.text, label.size)
     if label.anchor == "start":
