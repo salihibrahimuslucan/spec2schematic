@@ -92,6 +92,13 @@ drive an AI to implement each step, and gate every change behind ERC and tests b
 commit history is the honest record of that process. Today's foundation — the typed spec model,
 four ERC error checks plus a floating-port warning, a CLI report, and a green CI pipeline.
 
+**2026-07-08 — rendering conventions, before the renderer.**
+Wrote down the drawing rules the renderer will have to obey — a two-conductor cable is one line but
+never a shared node, wires route around blocks rather than through them, rails are crossed cleanly and
+once — in [docs/rendering-notes.md](docs/rendering-notes.md). Putting these on paper before writing the
+renderer keeps the eventual golden gate honest: the frozen output should encode conventions chosen
+deliberately, not whatever the first implementation happens to emit.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
