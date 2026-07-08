@@ -1,0 +1,33 @@
+# Tank level control — pump fills the tank between two float switches.
+# The low-level float starts the pump, the relay seals itself in via its
+# 13-14 contact, and the high-level float (NC, opens when full) drops the
+# whole circuit out. A second relay contact (23-24) drives the pump
+# contactor coil.
+name: tank-level-control
+components:
+  - id: SUP
+    type: control-supply
+    ports: [L, N]
+  - id: LSH
+    type: float-switch-high
+    ports: ["1", "2"]
+  - id: LSL
+    type: float-switch-low
+    ports: ["1", "2"]
+  - id: K1
+    type: control-relay
+    ports: [A1, A2, "13", "14", "23", "24"]
+  - id: K2
+    type: pump-contactor
+    ports: [A1, A2]
+nets:
+  - name: L1
+    connects: [SUP.L, LSH.1, K1.23]
+  - name: LEVEL
+    connects: [LSH.2, LSL.1, K1.13]
+  - name: COIL
+    connects: [LSL.2, K1.14, K1.A1]
+  - name: PUMP
+    connects: [K1.24, K2.A1]
+  - name: N
+    connects: [SUP.N, K1.A2, K2.A2]

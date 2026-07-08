@@ -1,0 +1,32 @@
+# Direct-on-line (DOL) motor starter — control circuit only.
+# Classic textbook ladder: supply -> overload contact -> stop (NC) ->
+# start (NO) -> contactor coil -> neutral, with the contactor's own
+# auxiliary contact (13-14) sealing in around the start button.
+name: dol-motor-starter
+components:
+  - id: SUP
+    type: control-supply
+    ports: [L, N]
+  - id: F1
+    type: overload-relay
+    ports: ["95", "96"]
+  - id: STOP
+    type: pushbutton-nc
+    ports: ["1", "2"]
+  - id: START
+    type: pushbutton-no
+    ports: ["3", "4"]
+  - id: K1
+    type: contactor
+    ports: [A1, A2, "13", "14"]
+nets:
+  - name: L1
+    connects: [SUP.L, F1.95]
+  - name: STOP_IN
+    connects: [F1.96, STOP.1]
+  - name: START_IN
+    connects: [STOP.2, START.3, K1.13]
+  - name: COIL
+    connects: [START.4, K1.14, K1.A1]
+  - name: N
+    connects: [K1.A2, SUP.N]
