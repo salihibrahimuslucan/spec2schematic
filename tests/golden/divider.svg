@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="336" height="160" viewBox="0 0 336 160">
+  <title>voltage-divider</title>
+  <rect x="0" y="0" width="336" height="160" fill="#ffffff"/>
+  <rect x="20" y="20" width="72" height="60" fill="#f4f6fa" stroke="#1f2430" stroke-width="1"/>
+  <rect x="20" y="20" width="72" height="18" fill="#e2e7f0" stroke="#1f2430" stroke-width="1"/>
+  <rect x="132" y="20" width="72" height="60" fill="#f4f6fa" stroke="#1f2430" stroke-width="1"/>
+  <rect x="132" y="20" width="72" height="18" fill="#e2e7f0" stroke="#1f2430" stroke-width="1"/>
+  <rect x="244" y="20" width="72" height="60" fill="#f4f6fa" stroke="#1f2430" stroke-width="1"/>
+  <rect x="244" y="20" width="72" height="18" fill="#e2e7f0" stroke="#1f2430" stroke-width="1"/>
+  <line x1="38" y1="80" x2="38" y2="104" stroke="#1f2430" stroke-width="1"/>
+  <line x1="150" y1="80" x2="150" y2="104" stroke="#1f2430" stroke-width="1"/>
+  <line x1="38" y1="104" x2="150" y2="104" stroke="#1f2430" stroke-width="1"/>
+  <line x1="186" y1="80" x2="186" y2="122" stroke="#1f2430" stroke-width="1"/>
+  <line x1="262" y1="80" x2="262" y2="122" stroke="#1f2430" stroke-width="1"/>
+  <line x1="186" y1="122" x2="262" y2="122" stroke="#1f2430" stroke-width="1"/>
+  <line x1="74" y1="80" x2="74" y2="140" stroke="#1f2430" stroke-width="1"/>
+  <line x1="298" y1="80" x2="298" y2="140" stroke="#1f2430" stroke-width="1"/>
+  <line x1="74" y1="140" x2="298" y2="140" stroke="#1f2430" stroke-width="1"/>
+  <text x="56" y="33" font-family="monospace" font-size="12" text-anchor="middle" fill="#1f2430">VIN</text>
+  <text x="56" y="51" font-family="monospace" font-size="9" text-anchor="middle" fill="#1f2430">source</text>
+  <text x="38" y="76" font-family="monospace" font-size="7" text-anchor="middle" fill="#1f2430">pos</text>
+  <text x="74" y="76" font-family="monospace" font-size="7" text-anchor="middle" fill="#1f2430">neg</text>
+  <text x="168" y="33" font-family="monospace" font-size="12" text-anchor="middle" fill="#1f2430">R1</text>
+  <text x="168" y="51" font-family="monospace" font-size="9" text-anchor="middle" fill="#1f2430">resistor</text>
+  <text x="150" y="76" font-family="monospace" font-size="7" text-anchor="middle" fill="#1f2430">a</text>
+  <text x="186" y="76" font-family="monospace" font-size="7" text-anchor="middle" fill="#1f2430">b</text>
+  <text x="280" y="33" font-family="monospace" font-size="12" text-anchor="middle" fill="#1f2430">R2</text>
+  <text x="280" y="51" font-family="monospace" font-size="9" text-anchor="middle" fill="#1f2430">resistor</text>
+  <text x="262" y="76" font-family="monospace" font-size="7" text-anchor="middle" fill="#1f2430">a</text>
+  <text x="298" y="76" font-family="monospace" font-size="7" text-anchor="middle" fill="#1f2430">b</text>
+  <text x="42" y="100" font-family="monospace" font-size="10" text-anchor="start" fill="#1f2430">VIN+</text>
+  <text x="190" y="118" font-family="monospace" font-size="10" text-anchor="start" fill="#1f2430">MID</text>
+  <text x="78" y="136" font-family="monospace" font-size="10" text-anchor="start" fill="#1f2430">GND</text>
+</svg>

@@ -1,0 +1,18 @@
+# Two-conductor cable between two connectors: SIG+ and SIG- are distinct
+# nets electrically, but share cable W1 and are drawn as one line with a
+# conductor-count label (docs/rendering-notes.md, rule 1).
+name: cable-pair
+components:
+  - id: J1
+    type: connector
+    ports: [p1, p2]
+  - id: J2
+    type: connector
+    ports: [p1, p2]
+nets:
+  - name: SIG+
+    connects: [J1.p1, J2.p1]
+    cable: W1
+  - name: SIG-
+    connects: [J1.p2, J2.p2]
+    cable: W1
