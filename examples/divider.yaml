@@ -1,0 +1,18 @@
+name: voltage-divider
+components:
+  - id: VIN
+    type: source
+    ports: [pos, neg]
+  - id: R1
+    type: resistor
+    ports: [a, b]
+  - id: R2
+    type: resistor
+    ports: [a, b]
+nets:
+  - name: VIN+
+    connects: [VIN.pos, R1.a]
+  - name: MID
+    connects: [R1.b, R2.a]
+  - name: GND
+    connects: [VIN.neg, R2.b]
