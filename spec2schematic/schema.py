@@ -45,8 +45,17 @@ class Endpoint:
 
 @dataclass(frozen=True)
 class Net:
+    """A named electrical node connecting two or more endpoints.
+
+    ``cable`` optionally names the physical cable this net runs in. Nets
+    sharing a cable name stay electrically distinct (separate nets in the
+    netlist) but are drawn as a single cable run with a conductor-count
+    label — see docs/rendering-notes.md, rule 1.
+    """
+
     name: str
     connects: tuple[Endpoint, ...]
+    cable: str | None = None
 
 
 @dataclass
@@ -88,10 +97,14 @@ def load_spec(path: str | Path) -> Spec:
         connects = item.get("connects", []) or []
         if not isinstance(connects, list):
             raise SpecError(f"net '{item['name']}' connects must be a list")
+        cable = item.get("cable")
+        if cable is not None and not isinstance(cable, str):
+            raise SpecError(f"net '{item['name']}' cable must be a string")
         nets.append(
             Net(
                 name=str(item["name"]),
                 connects=tuple(Endpoint.parse(str(c)) for c in connects),
+                cable=cable,
             )
         )
 
