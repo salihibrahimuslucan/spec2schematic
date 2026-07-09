@@ -1,5 +1,8 @@
 # Deploying the demo
 
+**Live now:** https://spec2schematic.onrender.com (Render.com free tier — first request
+after 15 minutes of idle takes ~30-50s to wake the instance up).
+
 The service in [`service/`](service/) is a self-contained FastAPI app (Dockerfile at the
 repo root) that serves both the JSON API and the mini UI at `/`. It listens on `$PORT` if
 the host sets one, otherwise defaults to `7860` — so the same image works unmodified on
@@ -21,11 +24,8 @@ you upgrade later or the free tier changes back.
 5. Leave the port field blank/default — Render injects `$PORT` and the Dockerfile's `CMD`
    already honors it (`${PORT:-7860}`).
 6. Click **Create Web Service**. First build takes ~2-3 minutes (installs fastapi, uvicorn,
-   ezdxf). Once it says "Live", the demo is at:
-   ```
-   https://spec2schematic.onrender.com
-   ```
-   (exact subdomain depends on what Render assigns — it's shown on the service dashboard).
+   ezdxf). Once it says "Live", the demo is at the URL Render assigns (this repo's is
+   already deployed at https://spec2schematic.onrender.com).
 
 **Free-tier trade-off:** the service spins down after 15 minutes of no traffic and takes
 ~30-50 seconds to wake up on the next request (cold start). Fine for a recruiter clicking a
@@ -80,17 +80,9 @@ curl http://localhost:7860/api/examples
 
 ---
 
-## SALİH'İN ADIMLARI — Render.com (ücretsiz, ~5 dakika)
+## SALİH'İN ADIMLARI — TAMAMLANDI ✓
 
-1. [render.com](https://render.com) → GitHub ile giriş yap (kart istemiyor).
-2. **New** → **Web Service** → `spec2schematic` reposunu seç.
-3. Runtime otomatik **Docker** algılanır (repo kökündeki `Dockerfile`'ı görür) → dokunma.
-4. **Instance type: Free** seç.
-5. Port alanını boş bırak — Dockerfile zaten Render'ın verdiği `$PORT`'u kullanıyor.
-6. **Create Web Service** → build bitince (2-3 dk) link hazır: sağ üstte gösterilen
-   `https://spec2schematic-XXXX.onrender.com` adresi.
-7. Linki aç, bir örnek spec seç, "Render" bas — SVG görünüyor mu doğrula. İlk açılış 30-50
-   saniye sürebilir (ücretsiz tier 15 dk hareketsizlikten sonra uyuyor), sonrakiler hızlı.
-
-Bu adımlar GitHub hesabınla Render'a giriş yapmanı gerektiriyor — ben senin adına hesap
-açamam, ama link hazır olduktan sonra doğrulamayı ben de yapabilirim.
+Deploy edildi: **https://spec2schematic.onrender.com** (Render.com free tier, servis
+`srv-d97r5qmq1p3s73fb69sg`). Doğrulandı: `/api/examples`, `/api/generate`,
+`/api/generate/dxf`, `/` hepsi 200 dönüyor. İlk açılış 30-50 saniye sürebilir (ücretsiz tier
+15 dk hareketsizlikten sonra uyuyor), sonrakiler hızlı.

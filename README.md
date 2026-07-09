@@ -134,9 +134,9 @@ uvicorn service.main:app --reload
 python -m pytest tests/test_service.py
 ```
 
-**Hosted demo:** not deployed yet — see [DEPLOY.md](DEPLOY.md) for the free Render.com
-path (Hugging Face Spaces' Docker SDK now requires a paid PRO plan; Static Spaces can't run
-a Python backend).
+**Hosted demo:** https://spec2schematic.onrender.com (free Render.com tier — spins down
+after 15 minutes idle, first request after that takes ~30-50s to wake up; deploy steps in
+[DEPLOY.md](DEPLOY.md)).
 
 ### MCP server
 
@@ -207,8 +207,8 @@ top of the existing core without touching it: same `Spec` → `Drawing` → rend
 same golden-tested output.
 
 **Run it:** `uvicorn service.main:app --reload`, open `http://127.0.0.1:8000`. Hosted demo
-link: see [above](#service-demo-ui--mcp-server) (not deployed yet, deploy steps for
-Render.com's free tier in [DEPLOY.md](DEPLOY.md)).
+live at [spec2schematic.onrender.com](https://spec2schematic.onrender.com) (Render.com free
+tier, deploy steps in [DEPLOY.md](DEPLOY.md)).
 
 **Another mistake worth keeping:** I wrote the first deploy doc assuming Hugging Face
 Spaces' free tier covered the Docker SDK, the way it always has for CPU-basic hardware.
@@ -243,7 +243,7 @@ Linux and only shows up on the platform the demo actually needs to run on.
 - [x] Geometry lint gate (L001–L004) wired into CLI and CI
 - [x] FastAPI service + browser demo UI
 - [x] MCP server (`generate_schematic`, `list_examples`)
-- [ ] Hosted demo pushed live (Render.com free tier)
+- [x] Hosted demo pushed live (Render.com free tier)
 - [ ] Multi-row placement for larger specs
 - [ ] Wire numbering and terminal-strip tables
 
