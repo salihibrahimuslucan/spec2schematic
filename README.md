@@ -9,7 +9,7 @@ same bytes, so every drawing is diffable, testable, and frozen behind a golden g
   <img src="tests/golden/divider.svg" alt="Rendered schematic of the voltage divider example" width="420">
 </p>
 
-The image above is not a screenshot — it is [one of the golden files](tests/golden/) the test
+The image above is not a screenshot. It is [one of the golden files](tests/golden/) the test
 suite compares against byte-for-byte, so the README can never drift from what the code emits.
 
 ## Quickstart
@@ -153,7 +153,7 @@ claude mcp add spec2schematic -- python mcp_server/server.py
 
 The project is developed with heavy test automation: unit tests over every module, CLI
 tests, a determinism test that renders in subprocesses under different `PYTHONHASHSEED`
-values and requires byte-identical output, and a golden gate — the rendered SVG of every
+values and requires byte-identical output, and a golden gate: the rendered SVG of every
 example is committed and compared byte-for-byte on each run. To change the renderer you
 must re-freeze the goldens (`python -m pytest --update-goldens`) and justify the diff in
 the commit. CI runs the suite on Python 3.11 and 3.12 and lints every example.
@@ -168,11 +168,11 @@ count of every cable and buried the actual topology in clutter. The turnback was
 the drawing and the netlist don't have to use the same representation: the netlist keeps
 every conductor as a distinct net (shorting them would be a lie about the circuit), while
 the drawing shows one line per cable with a conductor-count label, breaking out at the
-connector. One artifact, two views, each honest in its own language.
+connector.
 
 **My first wires went straight through component blocks.** The router connected pin to pin
 by the shortest orthogonal path, and the shortest path is frequently through the body of a
-component — electrically meaningless, visually wrong, and unreadable on paper. Instead of
+component: electrically meaningless, visually wrong, and unreadable on paper. Instead of
 patching detours case by case, I changed where wires are allowed to exist: all routing now
 lives in a channel below the component row, each net on its own lane, with only vertical
 drops from pins into the channel. Wires can no longer cross a body because the geometry
@@ -180,18 +180,18 @@ gives them no way to. The lint pass (L001) still checks it, but as a tripwire, n
 mechanism.
 
 **I cut rails at multiple points before adopting the single clean cut.** When a wire tapped
-a shared rail, early output touched the rail wherever it was convenient — multiple contact
+a shared rail, early output touched the rail wherever it was convenient: multiple contact
 points, ambiguous junctions, and drawings that read as if every crossing were a connection.
 The convention now is one tap, one junction dot, and a dot only where it is load-bearing: if
 removing it would change which nets are connected, it stays; anything else is a short waiting
 to be misread. Crossings without dots are just crossings.
 
 **The golden gate came from getting burned by "harmless" rendering tweaks.** Adjust one
-layout constant and an unrelated drawing quietly reshuffles — and nothing fails, because
+layout constant and an unrelated drawing quietly reshuffles, and nothing fails, because
 nothing was watching the picture itself. Now the rendered output of every example is frozen
 in the repo, tests compare byte-for-byte,
 and the update path is deliberately manual: re-freeze, look at the diff, and say in the
-commit why the new picture is right. Determinism is what makes this workable — no
+commit why the new picture is right. Determinism is what makes this workable: no
 timestamps, no floats, no hash-order dependence (there is a test that renders under
 different `PYTHONHASHSEED` values and demands identical bytes). An output you can't diff
 is an output you can't review.
@@ -202,22 +202,22 @@ is an output you can't review.
 and `/api/examples`, plus a single-file vanilla-JS demo UI at `/`; a `Dockerfile` sized for
 Hugging Face Spaces (`sdk: docker`, port 7860); an MCP server (`mcp_server/`) exposing
 `generate_schematic` and `list_examples` as tools. All three sit on top of the existing
-core without touching it — same `Spec` → `Drawing` → renderer pipeline, same golden-tested
+core without touching it: same `Spec` → `Drawing` → renderer pipeline, same golden-tested
 output.
 
 **Run it:** `uvicorn service.main:app --reload`, open `http://127.0.0.1:8000`. Hosted demo
-link: see [above](#service-demo-ui--mcp-server) (placeholder until pushed to HF Spaces —
-see [DEPLOY.md](DEPLOY.md)).
+link: see [above](#service-demo-ui--mcp-server) (placeholder until pushed to HF Spaces,
+deploy steps in [DEPLOY.md](DEPLOY.md)).
 
 **A mistake worth keeping:** the service takes a spec as a YAML *string*, but `load_spec`
 only reads from a path, so I write the string to a temp file first. My first version used
-`tempfile.mkstemp()` and wrote to the returned path with `Path.write_text` — which left the
+`tempfile.mkstemp()` and wrote to the returned path with `Path.write_text`, which left the
 file descriptor `mkstemp` itself opened still open. `write_text`/`load_spec` then opened
 their *own* handles on top of that, and on Windows the subsequent `unlink()` failed with
 `WinError 32: file in use by another process`, because Windows refuses to delete a file
 while any handle on it is open (Unix just unlinks the directory entry and lets the last
-close free it). The fix was one line — `os.close(fd)` right after `mkstemp` returns, before
-any read or write touches the path — but it's the kind of bug that's invisible in CI on
+close free it). The fix was one line, `os.close(fd)` right after `mkstemp` returns, before
+any read or write touches the path. But it's the kind of bug that's invisible in CI on
 Linux and only shows up on the platform the demo actually needs to run on.
 
 ## Roadmap
