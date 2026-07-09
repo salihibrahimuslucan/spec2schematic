@@ -134,8 +134,9 @@ uvicorn service.main:app --reload
 python -m pytest tests/test_service.py
 ```
 
-**Hosted demo:** https://huggingface.co/spaces/salihibrahimuslucan/spec2schematic
-(deploy steps in [DEPLOY.md](DEPLOY.md); placeholder until the Space is pushed live).
+**Hosted demo:** not deployed yet — see [DEPLOY.md](DEPLOY.md) for the free Render.com
+path (Hugging Face Spaces' Docker SDK now requires a paid PRO plan; Static Spaces can't run
+a Python backend).
 
 ### MCP server
 
@@ -199,15 +200,26 @@ is an output you can't review.
 ### Phase 2: service + hosted demo + MCP server
 
 **Added:** a FastAPI service (`service/`) exposing `/api/generate`, `/api/generate/dxf`,
-and `/api/examples`, plus a single-file vanilla-JS demo UI at `/`; a `Dockerfile` sized for
-Hugging Face Spaces (`sdk: docker`, port 7860); an MCP server (`mcp_server/`) exposing
-`generate_schematic` and `list_examples` as tools. All three sit on top of the existing
-core without touching it: same `Spec` → `Drawing` → renderer pipeline, same golden-tested
-output.
+and `/api/examples`, plus a single-file vanilla-JS demo UI at `/`; a `Dockerfile` that reads
+`$PORT` if the host injects one and otherwise defaults to 7860; an MCP server
+(`mcp_server/`) exposing `generate_schematic` and `list_examples` as tools. All three sit on
+top of the existing core without touching it: same `Spec` → `Drawing` → renderer pipeline,
+same golden-tested output.
 
 **Run it:** `uvicorn service.main:app --reload`, open `http://127.0.0.1:8000`. Hosted demo
-link: see [above](#service-demo-ui--mcp-server) (placeholder until pushed to HF Spaces,
-deploy steps in [DEPLOY.md](DEPLOY.md)).
+link: see [above](#service-demo-ui--mcp-server) (not deployed yet, deploy steps for
+Render.com's free tier in [DEPLOY.md](DEPLOY.md)).
+
+**Another mistake worth keeping:** I wrote the first deploy doc assuming Hugging Face
+Spaces' free tier covered the Docker SDK, the way it always has for CPU-basic hardware.
+By the time I actually opened the "create Space" page, Docker (and Gradio) Spaces required
+a paid PRO plan — only the Static template, which can't run a Python backend, was free.
+The lesson isn't "HF changed pricing," it's that I wrote deploy instructions from memory of
+how a third-party platform behaves instead of from the platform's page in front of me at
+the time of writing. The fix was mechanical (retarget the primary path to Render.com's free
+Docker web services, make the Dockerfile honor `$PORT` so the same image works on both), but
+the process fix is the one to keep: verify a paid-tier claim against the live UI before it
+ships in a doc, don't trust a training-time snapshot of someone else's pricing page.
 
 **A mistake worth keeping:** the service takes a spec as a YAML *string*, but `load_spec`
 only reads from a path, so I write the string to a temp file first. My first version used
@@ -231,7 +243,7 @@ Linux and only shows up on the platform the demo actually needs to run on.
 - [x] Geometry lint gate (L001–L004) wired into CLI and CI
 - [x] FastAPI service + browser demo UI
 - [x] MCP server (`generate_schematic`, `list_examples`)
-- [ ] Hosted demo pushed to Hugging Face Spaces
+- [ ] Hosted demo pushed live (Render.com free tier)
 - [ ] Multi-row placement for larger specs
 - [ ] Wire numbering and terminal-strip tables
 
