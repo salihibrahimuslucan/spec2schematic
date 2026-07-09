@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>spec2schematic demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+    background: Canvas;
+    color: CanvasText;
+  }
+  header {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid color-mix(in srgb, CanvasText 20%, transparent);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  header h1 { font-size: 1rem; margin: 0; }
+  header a { color: inherit; }
+  main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  @media (max-width: 800px) {
+    main { grid-template-columns: 1fr; }
+  }
+  .panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+  .panel h2 { font-size: 0.85rem; margin: 0; text-transform: uppercase; opacity: 0.7; }
+  textarea {
+    width: 100%;
+    height: 380px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    padding: 0.5rem;
+    border: 1px solid color-mix(in srgb, CanvasText 25%, transparent);
+    background: color-mix(in srgb, Canvas 96%, CanvasText 4%);
+    color: inherit;
+    resize: vertical;
+  }
+  select, button {
+    font: inherit;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid color-mix(in srgb, CanvasText 30%, transparent);
+    background: color-mix(in srgb, Canvas 94%, CanvasText 6%);
+    color: inherit;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  button.primary {
+    background: #2f6fed;
+    color: white;
+    border-color: #2f6fed;
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+  .toolbar { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  #preview {
+    border: 1px solid color-mix(in srgb, CanvasText 20%, transparent);
+    min-height: 380px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+    background: white;
+  }
+  #preview svg { max-width: 100%; height: auto; }
+  #lint {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 0.8rem;
+    max-height: 160px;
+    overflow: auto;
+    border: 1px solid color-mix(in srgb, CanvasText 15%, transparent);
+    border-radius: 4px;
+  }
+  #lint li { padding: 0.35rem 0.5rem; border-bottom: 1px solid color-mix(in srgb, CanvasText 10%, transparent); }
+  #lint li:last-child { border-bottom: none; }
+  #lint .empty { opacity: 0.6; }
+  #lint .error { color: #d33; }
+  #status { font-size: 0.8rem; min-height: 1.2em; }
+  #status.error { color: #d33; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<header>
+  <h1>spec2schematic</h1>
+  <span>YAML wiring spec &rarr; deterministic schematic</span>
+  <a href="https://github.com/salihibrahimuslucan/spec2schematic" target="_blank" rel="noopener">source</a>
+</header>
+<main>
+  <section class="panel">
+    <h2>Spec</h2>
+    <div class="toolbar">
+      <select id="example-select">
+        <option value="">load example&hellip;</option>
+      </select>
+      <button id="render-btn" class="primary">Render</button>
+      <button id="dxf-btn">Download DXF</button>
+    </div>
+    <textarea id="spec-input" spellcheck="false" placeholder="name: my-circuit&#10;components:&#10;  - id: R1&#10;    type: resistor&#10;    ports: [a, b]&#10;nets: []"></textarea>
+    <div id="status"></div>
+  </section>
+  <section class="panel">
+    <h2>Preview</h2>
+    <div id="preview"><span style="opacity:0.5">render a spec to see it here</span></div>
+    <h2>Lint</h2>
+    <ul id="lint"><li class="empty">nothing yet</li></ul>
+  </section>
+</main>
+<script>
+const specInput = document.getElementById('spec-input');
+const exampleSelect = document.getElementById('example-select');
+const renderBtn = document.getElementById('render-btn');
+const dxfBtn = document.getElementById('dxf-btn');
+const preview = document.getElementById('preview');
+const lintList = document.getElementById('lint');
+const statusEl = document.getElementById('status');
+
+function setStatus(text, isError) {
+  statusEl.textContent = text || '';
+  statusEl.classList.toggle('error', Boolean(isError));
+}
+
+function renderLint(items) {
+  lintList.innerHTML = '';
+  if (!items || items.length === 0) {
+    lintList.innerHTML = '<li class="empty">clean</li>';
+    return;
+  }
+  for (const item of items) {
+    const li = document.createElement('li');
+    li.textContent = item;
+    if (item.includes('ERROR')) li.classList.add('error');
+    lintList.appendChild(li);
+  }
+}
+
+async function extractErrorDetail(response) {
+  try {
+    const body = await response.json();
+    if (Array.isArray(body.detail)) return body.detail.join('\n');
+    if (typeof body.detail === 'string') return body.detail;
+    return JSON.stringify(body);
+  } catch (err) {
+    return `HTTP ${response.status}`;
+  }
+}
+
+async function loadExamples() {
+  try {
+    const res = await fetch('/api/examples');
+    const examples = await res.json();
+    for (const ex of examples) {
+      const option = document.createElement('option');
+      option.value = ex.spec;
+      option.textContent = ex.name;
+      exampleSelect.appendChild(option);
+    }
+  } catch (err) {
+    setStatus('could not load examples', true);
+  }
+}
+
+exampleSelect.addEventListener('change', () => {
+  if (exampleSelect.value) specInput.value = exampleSelect.value;
+});
+
+async function renderSpec() {
+  const spec = specInput.value;
+  renderBtn.disabled = true;
+  setStatus('rendering...');
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ spec }),
+    });
+    if (!res.ok) {
+      const detail = await extractErrorDetail(res);
+      preview.innerHTML = '<span style="opacity:0.5">render failed</span>';
+      renderLint([]);
+      setStatus(detail, true);
+      return;
+    }
+    const data = await res.json();
+    preview.innerHTML = data.svg;
+    renderLint(data.lint);
+    setStatus('rendered ' + new Date().toLocaleTimeString());
+  } catch (err) {
+    setStatus('network error: ' + err.message, true);
+  } finally {
+    renderBtn.disabled = false;
+  }
+}
+
+async function downloadDxf() {
+  const spec = specInput.value;
+  dxfBtn.disabled = true;
+  setStatus('building dxf...');
+  try {
+    const res = await fetch('/api/generate/dxf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ spec }),
+    });
+    if (!res.ok) {
+      const detail = await extractErrorDetail(res);
+      setStatus(detail, true);
+      return;
+    }
+    const blob = await res.blob();
+    const disposition = res.headers.get('Content-Disposition') || '';
+    const match = disposition.match(/filename="?([^"]+)"?/);
+    const filename = match ? match[1] : 'schematic.dxf';
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    setStatus('downloaded ' + filename);
+  } catch (err) {
+    setStatus('network error: ' + err.message, true);
+  } finally {
+    dxfBtn.disabled = false;
+  }
+}
+
+renderBtn.addEventListener('click', renderSpec);
+dxfBtn.addEventListener('click', downloadDxf);
+loadExamples();
+</script>
+</body>
+</html>

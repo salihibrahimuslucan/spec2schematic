@@ -36,6 +36,15 @@ pip install -e ".[dxf]"
 spec2schematic render examples/dol_starter.yaml -o dol_starter.dxf
 ```
 
+A FastAPI service and browser demo wrap the same core (see
+[Service, demo UI & MCP server](#service-demo-ui--mcp-server) below):
+
+```bash
+pip install -e ".[dxf,service]"
+uvicorn service.main:app --reload
+# open http://127.0.0.1:8000
+```
+
 ## Architecture
 
 ```
@@ -103,6 +112,43 @@ Geometry (lint over the laid-out drawing):
 | L003 | a label collides with another label or with a wire  |
 | L004 | a pin is drawn but connected to nothing             |
 
+## Service, demo UI & MCP server
+
+`service/` wraps the exact same core (`schema` → `erc` → `layout` → `lint` / `render_*`) in
+a small FastAPI app, with a single-file vanilla-JS demo UI served at `/`:
+
+| Endpoint               | Method | Does                                                          |
+|------------------------|--------|----------------------------------------------------------------|
+| `/`                    | GET    | mini demo UI: paste/load a spec, render it, download the DXF |
+| `/api/examples`        | GET    | the repo's example specs (name + YAML)                       |
+| `/api/generate`        | POST   | `{"spec": "<yaml>"}` → `{"svg": "...", "lint": [...]}`        |
+| `/api/generate/dxf`    | POST   | `{"spec": "<yaml>"}` → DXF file download                      |
+
+ERC errors and malformed YAML come back as `422` with a readable message list, not a stack
+trace; specs over 64KB are rejected; generation runs with a timeout so a pathological spec
+can't hang a worker. Run it locally:
+
+```bash
+pip install -e ".[dxf,service]"
+uvicorn service.main:app --reload
+python -m pytest tests/test_service.py
+```
+
+**Hosted demo:** https://huggingface.co/spaces/salihibrahimuslucan/spec2schematic
+(deploy steps in [DEPLOY.md](DEPLOY.md); placeholder until the Space is pushed live).
+
+### MCP server
+
+`mcp_server/server.py` exposes the same core as two MCP tools, so any MCP-aware client
+(Claude Code, Claude Desktop, etc.) can generate schematics without shelling out to the
+CLI: `generate_schematic(spec_yaml)` renders SVG + DXF to a temp directory and returns
+their paths plus lint findings; `list_examples()` returns the repo's example specs.
+
+```bash
+pip install -e ".[mcp]"
+claude mcp add spec2schematic -- python mcp_server/server.py
+```
+
 ## Testing
 
 The project is developed with heavy test automation: unit tests over every module, CLI
@@ -150,6 +196,30 @@ timestamps, no floats, no hash-order dependence (there is a test that renders un
 different `PYTHONHASHSEED` values and demands identical bytes). An output you can't diff
 is an output you can't review.
 
+### Phase 2: service + hosted demo + MCP server
+
+**Added:** a FastAPI service (`service/`) exposing `/api/generate`, `/api/generate/dxf`,
+and `/api/examples`, plus a single-file vanilla-JS demo UI at `/`; a `Dockerfile` sized for
+Hugging Face Spaces (`sdk: docker`, port 7860); an MCP server (`mcp_server/`) exposing
+`generate_schematic` and `list_examples` as tools. All three sit on top of the existing
+core without touching it — same `Spec` → `Drawing` → renderer pipeline, same golden-tested
+output.
+
+**Run it:** `uvicorn service.main:app --reload`, open `http://127.0.0.1:8000`. Hosted demo
+link: see [above](#service-demo-ui--mcp-server) (placeholder until pushed to HF Spaces —
+see [DEPLOY.md](DEPLOY.md)).
+
+**A mistake worth keeping:** the service takes a spec as a YAML *string*, but `load_spec`
+only reads from a path, so I write the string to a temp file first. My first version used
+`tempfile.mkstemp()` and wrote to the returned path with `Path.write_text` — which left the
+file descriptor `mkstemp` itself opened still open. `write_text`/`load_spec` then opened
+their *own* handles on top of that, and on Windows the subsequent `unlink()` failed with
+`WinError 32: file in use by another process`, because Windows refuses to delete a file
+while any handle on it is open (Unix just unlinks the directory entry and lets the last
+close free it). The fix was one line — `os.close(fd)` right after `mkstemp` returns, before
+any read or write touches the path — but it's the kind of bug that's invisible in CI on
+Linux and only shows up on the platform the demo actually needs to run on.
+
 ## Roadmap
 
 - [x] Spec model + structural validation
@@ -159,6 +229,9 @@ is an output you can't review.
 - [x] Golden-image test gate (freeze output, justify every diff)
 - [x] DXF export via `ezdxf` (optional extra)
 - [x] Geometry lint gate (L001–L004) wired into CLI and CI
+- [x] FastAPI service + browser demo UI
+- [x] MCP server (`generate_schematic`, `list_examples`)
+- [ ] Hosted demo pushed to Hugging Face Spaces
 - [ ] Multi-row placement for larger specs
 - [ ] Wire numbering and terminal-strip tables
 
