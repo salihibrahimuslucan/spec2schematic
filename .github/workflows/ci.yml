@@ -21,3 +21,5 @@ jobs:
         run: python -m pytest -q
       - name: Lint rendered examples
         run: spec2schematic lint examples/*.yaml
+      - name: Check provenance of rendered examples
+        run: spec2schematic provenance examples/*.yaml

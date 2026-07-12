@@ -98,6 +98,7 @@ class Label:
     size: int
     anchor: str  # "start" | "middle" | "end"
     kind: str  # "component-id" | "component-type" | "port" | "net"
+    origin: str = ""  # spec field this text was read from, e.g. "component:R1.type"
 
 
 @dataclass
@@ -163,7 +164,15 @@ def build_drawing(spec: Spec) -> Drawing:
         box = Box(component.id, component.type, x, MARGIN, width, BOX_HEIGHT)
         boxes.append(box)
         labels.append(
-            Label(component.id, x + width // 2, MARGIN + 13, ID_FONT, "middle", "component-id")
+            Label(
+                component.id,
+                x + width // 2,
+                MARGIN + 13,
+                ID_FONT,
+                "middle",
+                "component-id",
+                f"component:{component.id}.id",
+            )
         )
         labels.append(
             Label(
@@ -173,6 +182,7 @@ def build_drawing(spec: Spec) -> Drawing:
                 TYPE_FONT,
                 "middle",
                 "component-type",
+                f"component:{component.id}.type",
             )
         )
         first_pin = x + (width - pin_span) // 2
@@ -181,7 +191,12 @@ def build_drawing(spec: Spec) -> Drawing:
             px = first_pin + i * PORT_PITCH
             pin_pos[(component.id, port)] = (px, bottom)
             pin_order.append((component.id, port))
-            labels.append(Label(port, px, bottom - 4, PORT_FONT, "middle", "port"))
+            labels.append(
+                Label(
+                    port, px, bottom - 4, PORT_FONT, "middle", "port",
+                    f"component:{component.id}.ports[{i}]",
+                )
+            )
         x += width + BOX_GAP
 
     groups = _group_nets(spec)
@@ -227,7 +242,8 @@ def build_drawing(spec: Spec) -> Drawing:
             # strictly inside the lane span need one.
             for dx in drops[1:-1]:
                 dots.append(Dot(dx, lane_y, group.label))
-        labels.append(Label(group.label, drops[0] + 4, lane_y - 4, NET_FONT, "start", "net"))
+        net_origin = f"net:cable:{group.nets[0].cable}" if group.kind == "cable" else f"net:{group.nets[0].name}"
+        labels.append(Label(group.label, drops[0] + 4, lane_y - 4, NET_FONT, "start", "net", net_origin))
 
     pins = [
         Pin(component, port, *pin_pos[(component, port)], wired=(component, port) in wired)

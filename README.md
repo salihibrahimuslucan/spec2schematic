@@ -26,6 +26,9 @@ spec2schematic render examples/divider.yaml -o divider.svg
 # geometry lint over the rendered drawing
 spec2schematic lint examples/*.yaml
 
+# does every drawn label trace back to a real spec field?
+spec2schematic provenance examples/*.yaml
+
 python -m pytest
 ```
 
@@ -58,16 +61,26 @@ uvicorn service.main:app --reload
     |
     v
  layout.py ---> Drawing: boxes, pins, wire segments, junction dots, labels
-    |                     |
+    |                     |            (each label carries an `origin`,
+    |                     |             e.g. "component:R1.type")
     |                     +--> lint.py: geometry lint (L001..L004)
+    |                     +--> provenance.py: content-fidelity (P001..P002)
     v
  render_svg.py --> .svg   byte-stable, golden-tested
  render_dxf.py --> .dxf   optional, via ezdxf
 ```
 
 Both renderers consume the exact same `Drawing`, so SVG and DXF always agree on geometry.
-The lint pass also runs on the `Drawing`, not on the output text, so one set of checks gates
-every format.
+The lint and provenance passes also run on the `Drawing`, not on the output text, so one set
+of checks gates every format.
+
+`Drawing` is the one intermediate representation everything downstream reads — layout code
+never hands a renderer anything but this plain data, and a renderer never has its own copy of
+spec content to drift out of sync with. That single choice is what makes the provenance check
+below possible: because every label's text and its `origin` travel together through the same
+object, a check can walk the `Drawing` after the fact and ask, for each one, "does this text
+still match what the spec says at that origin?" — without needing to re-run layout or inspect
+rendered output.
 
 ## Spec format
 
@@ -111,6 +124,23 @@ Geometry (lint over the laid-out drawing):
 | L002 | two wire segments overlap collinearly               |
 | L003 | a label collides with another label or with a wire  |
 | L004 | a pin is drawn but connected to nothing             |
+
+Provenance (does the picture say what the spec says):
+
+| Code | Meaning                                                              |
+|------|-----------------------------------------------------------------------|
+| P001 | a component, port, or net in the spec has no label in the drawing     |
+| P002 | a label's origin doesn't resolve to a real field of the spec         |
+
+These exist for a specific failure mode: a renderer that quietly prints a baked-in string
+(a part number, a rating) instead of reading it from the spec. Nothing about that failure
+looks wrong in the rendered picture, and it passes every geometry lint — the drawing is
+readable, just no longer telling the truth. P002 catches it because every label's `origin`
+is checked against the actual spec that produced the drawing, not just trusted.
+
+```bash
+spec2schematic provenance examples/*.yaml
+```
 
 ## Service, demo UI & MCP server
 
@@ -244,6 +274,7 @@ Linux and only shows up on the platform the demo actually needs to run on.
 - [x] FastAPI service + browser demo UI
 - [x] MCP server (`generate_schematic`, `list_examples`)
 - [x] Hosted demo pushed live (Render.com free tier)
+- [x] Provenance gate (P001–P002): every drawn label traces back to a spec field
 - [ ] Multi-row placement for larger specs
 - [ ] Wire numbering and terminal-strip tables
 

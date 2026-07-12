@@ -94,6 +94,16 @@ def test_lint_reports_open_pin_geometry(tmp_path, capsys):
     assert "L004" in capsys.readouterr().out
 
 
+def test_provenance_clean_example(capsys):
+    assert main(["provenance", DIVIDER]) == 0
+    assert "provenance clean" in capsys.readouterr().out
+
+
+def test_provenance_reports_erc_errors(tmp_path, capsys):
+    assert main(["provenance", _write(tmp_path, BROKEN)]) == 1
+    assert "E002" in capsys.readouterr().out
+
+
 def test_no_command_is_usage_error(capsys):
     assert main([]) == 2
 

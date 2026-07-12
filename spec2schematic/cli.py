@@ -12,6 +12,7 @@ from pathlib import Path
 from .erc import check, has_errors
 from .layout import build_drawing
 from .lint import lint
+from .provenance import check as check_provenance
 from .render_dxf import MissingDxfDependencyError, render_dxf
 from .render_svg import render_svg
 from .schema import Spec, SpecError, load_spec
@@ -101,6 +102,29 @@ def _cmd_lint(args: argparse.Namespace) -> int:
     return rc
 
 
+def _cmd_provenance(args: argparse.Namespace) -> int:
+    rc = 0
+    for path in args.specs:
+        spec = _load(path)
+        if spec is None:
+            return 2
+
+        issues = check(spec)
+        findings = [] if has_errors(issues) else check_provenance(spec, build_drawing(spec))
+        errors = [issue for issue in issues if issue.severity == "error"]
+
+        if not errors and not findings:
+            print(f"{path}: provenance clean")
+            continue
+        rc = 1
+        print(f"{path}: {len(errors) + len(findings)} finding(s)")
+        for issue in errors:
+            print(f"  {issue}")
+        for finding in findings:
+            print(f"  {finding}")
+    return rc
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="spec2schematic",
@@ -120,6 +144,12 @@ def main(argv: list[str] | None = None) -> int:
     p_lint = sub.add_parser("lint", help="run ERC plus geometry lint over rendered specs")
     p_lint.add_argument("specs", nargs="+", help="spec YAML files to lint")
     p_lint.set_defaults(func=_cmd_lint)
+
+    p_prov = sub.add_parser(
+        "provenance", help="check that every drawn label traces back to a real spec field"
+    )
+    p_prov.add_argument("specs", nargs="+", help="spec YAML files to check")
+    p_prov.set_defaults(func=_cmd_provenance)
 
     try:
         args = parser.parse_args(sys.argv[1:] if argv is None else argv)
